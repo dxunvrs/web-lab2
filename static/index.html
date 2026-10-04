@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Лабораторная работа 2</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-info">
+                <span>Шулай Роман Юрьевич</span>
+                <span>Группа: P3215</span>
+                <span>Вариант: 12743</span>
+            </div>
+        </header>
+
+        <main class="content">
+            <section class="canvas-section">
+                <div class="canvas-container">
+                    <canvas
+                        class="graph-canvas"
+                        width="600"
+                        height="600"
+                    ></canvas>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <form class="point-form">
+                    <div class="form-group">
+                        <label class="group-title">Координата по X:</label>
+                        <div class="x-checkbox-container">
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="-5"
+                                    class="x-checkbox"
+                                />
+                                -5
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="-4"
+                                    class="x-checkbox"
+                                />
+                                -4
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="-3"
+                                    class="x-checkbox"
+                                />
+                                -3
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="-2"
+                                    class="x-checkbox"
+                                />
+                                -2
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="-1"
+                                    class="x-checkbox"
+                                />
+                                -1
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="0"
+                                    class="x-checkbox"
+                                />
+                                0
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="1"
+                                    class="x-checkbox"
+                                />
+                                1
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="2"
+                                    class="x-checkbox"
+                                />
+                                2
+                            </label>
+                            <label class="x-checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="x-val"
+                                    value="3"
+                                    class="x-checkbox"
+                                />
+                                3
+                            </label>
+                        </div>
+                        <span class="error-msg" id="x-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="y-input" class="group-title">
+                            Координата по Y: (от -5 до 5)
+                        </label>
+                        <input type="text" class="y-input" name="y-val" />
+                        <span class="error-msg" id="y-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="r-select" class="group-title"
+                            >Радиус R:</label
+                        >
+                        <select class="r-select" name="r-val">
+                            <option value="1">1</option>
+                            <option value="1.5">1.5</option>
+                            <option value="2">2</option>
+                            <option value="2.5">2.5</option>
+                            <option value="3">3</option>
+                        </select>
+                        <span class="error-msg" id="r-error"></span>
+                    </div>
+
+                    <div class="buttons">
+                        <button type="submit" id="submit-btn">Проверить</button>
+                        <button type="button" id="clear-btn">
+                            Очистить историю
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </main>
+        <section class="table-section">
+            <div class="table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>X</th>
+                            <th>Y</th>
+                            <th>R</th>
+                            <th>Результат</th>
+                            <th>Дата и время проверки</th>
+                        </tr>
+                    </thead>
+                    <tbody class="history-body"></tbody>
+                </table>
+            </div>
+        </section>
+        <script src="script.js"></script>
+    </body>
+</html>

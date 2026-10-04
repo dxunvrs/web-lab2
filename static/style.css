@@ -1,0 +1,260 @@
+/* Базовые стили */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: whitesmoke;
+    font-family: 'Times New Roman', Times, serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* "Шапка" */
+.header {
+    background-color: midnightblue;
+    padding: 16px 24px;
+    font-family: sans-serif;
+    font-size: 18px;
+    color: whitesmoke;
+}
+
+.header-info {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.header-info span {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Основной контент */
+.content {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    margin: 24px auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+    max-width: 1200px;
+}
+
+.canvas-section, .form-section, .table-section {
+    background-color: white;
+    border-radius: 12px;
+}
+
+.canvas-section {
+    flex: 1 1 400px;
+    min-height: 400px;
+}
+
+.canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.form-section {
+    flex: 0 0 380px;
+    padding: 24px;
+}
+
+/* Элементы ввода */
+.form-group {
+    margin-top: 0px;
+    margin-bottom: 16px;
+}
+
+.group-title {
+    display: block;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.x-checkbox-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.x-checkbox-option {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.y-input {
+    width: 35%;
+    border: 1.5px solid;
+    border-radius: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.r-select {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    cursor: pointer
+}
+
+/* Ошибки валидации */
+.error-msg {
+    display: block;
+    color: darkred;
+    font-size: 14px;
+    font-weight: 700;
+
+    white-space: pre-line;
+}
+
+/* Кнопки */
+.buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.buttons button {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+#submit-btn, #clear-btn {
+    background-color:red;
+    color: whitesmoke;
+}
+
+/* Таблица */
+.table-section {
+    max-width: 1200px;
+    width: 100%;
+    padding: 0 16px;
+    margin: 0 auto 40px 0;
+    box-sizing: border-box;
+}
+
+.table-container {
+    padding: 12px;
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+}
+
+.history-table th, .history-table td {
+    padding: 6px 8px;
+    text-align: center;
+}
+
+.history-table th {
+    background-color: whitesmoke;
+    color: black;
+    font-weight: 700;
+}
+
+.history-body tr:hover {
+    background-color: lightsteelblue;
+}
+
+/* Псевдоклассы */
+.x-checkbox-option:hover {
+    background-color: whitesmoke;
+}
+
+.x-checkbox-option:has(input[type="checkbox"]:checked) {
+    font-weight: 700;
+}
+
+.y-input:focus {
+    border-color: midnightblue;
+}
+
+#clear-btn:hover, #submit-btn:hover {
+    color: lightgray;
+    border: 1px;
+}
+
+#clear-btn:active, #submit-btn:active {
+    transform: translateY(1px);
+}
+
+/* пример каскадирования */
+#submit-btn, #clear-btn {
+    background-color:midnightblue;
+    color: whitesmoke;
+}
+
+/* гном */
+.gnome {
+    position: fixed;
+    z-index: 10000;
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-drag: none;
+    transition: top 0.9s ease-in-out, left 0.9s ease-in-out, transform 0.2s;
+}
+
+.gnome:hover {
+    transform: scale(1.2);
+}
+
+.gnome:active {
+    transform: scale(0.9);
+}
+
+.gnome-msg {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    background-color: midnightblue;
+    color: white;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 500;
+    z-index: 9999;
+    animation: msg-anim 4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes msg-anim {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.gnome-miss {
+    background-color: red;
+}
