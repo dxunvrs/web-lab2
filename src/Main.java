@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class Main {
@@ -13,6 +14,10 @@ public class Main {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
 
         while (fcgiInterface.FCGIaccept() >= 0) {
+            if (FCGIInterface.request == null) {
+                continue;
+            }
+
             long startTime = System.nanoTime();
 
             String method = FCGIInterface.request.params.getProperty("REQUEST_METHOD");
@@ -34,7 +39,7 @@ public class Main {
                 long executionTime = System.nanoTime() - startTime;
                 String currentTime = LocalDateTime.now().format(dateTimeFormatter);
 
-                sendOk(hit, String.valueOf(executionTime), currentTime);
+                sendOk(hit, String.format(Locale.US, "%.3f", executionTime / 1_000_000.0), currentTime);
             } else {
                 sendError(validator.getErrorMessage());
             }

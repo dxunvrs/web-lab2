@@ -114,11 +114,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const pixelX = centerX + pt.x * scale;
             const pixelY = centerY - pt.y * scale;
 
-            const isPointHit = checkHit(pt.x, pt.y, r);
-
             ctx.beginPath();
             ctx.arc(pixelX, pixelY, 4.5, 0, Math.PI * 2);
-            ctx.fillStyle = isPointHit ? "green" : "red";
+            ctx.fillStyle = pt.hit ? "green" : "red";
             ctx.fill();
             ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 1;
@@ -140,6 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderTable() {
         const history = loadHistory();
+        historyBody.innerHTML = "";
 
         history.forEach(item => {
             const tr = document.createElement("tr");
@@ -163,11 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
             tr.appendChild(tdResult);
 
             const tdServerTime = document.createElement("td");
-            tdTime.textContent = item.serverTime;
+            tdServerTime.textContent = item.serverTime;
             tr.append(tdServerTime);
 
             const tdExecTime = document.createElement("td");
-            tdExecTime.textContent = item.execTime;
+            tdExecTime.textContent = item.execTime + " мс";
             tr.appendChild(tdExecTime);
 
             historyBody.appendChild(tr);
@@ -237,6 +236,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function submitForm(e) {
         e.preventDefault();
 
+        xError.textContent = "";
+        yError.textContent = "";
+        rError.textContent = "";
+        serverError.textContent = "";
+
         const validation = validateInputs();
         if (!validation.isValid) {
             return;
@@ -259,22 +263,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const hit = data.hit;
-            const execTime = data.executionTime;
-            const serverTime = data.serverTime;
-
             const history = loadHistory();
             history.unshift({
-                x: xRaw,
-                y: yRaw,
-                r: rVal,
-                hit: hit,
-                execTime: execTime,
-                serverTime: serverTime
+                x: validation.x,
+                y: validation.y,
+                r: validation.r,
+                hit: data.hit,
+                execTime: data.executionTime,
+                serverTime: data.serverTime
             });
             saveHistory(history);
             renderTable();
-            drawCanvas(rNum);
+            drawCanvas(validation.rNum);
         } catch (error) {
             serverError.textContent = "Ошибка сети: сервер недоступен";
         } finally {
