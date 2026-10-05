@@ -15,16 +15,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const STORAGE_KEY = "web-lab2";
 
-    const EPS = 1e-12; // для точности границ
-
     function checkHit(x, y, r) {
-        if (x >= -EPS && y >= -EPS) {
+        if (x >= -Number.EPSILON && y >= -Number.EPSILON) {
             return x <= r && y <= r / 2; // прямоугольник
         }
-        if (x <= EPS && y >= -EPS) {
+        if (x <= Number.EPSILON && y >= -Number.EPSILON) {
             return y <= (x * 1 / 2 + r / 2); // треугольник
         }
-        if (x <= -EPS && y <= EPS) {
+        if (x <= -Number.EPSILON && y <= Number.EPSILON) {
             return (x * x + y * y) <= r * r; // окружность
         }
         return false;
