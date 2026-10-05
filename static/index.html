@@ -28,90 +28,10 @@
             <section class="form-section">
                 <form class="point-form">
                     <div class="form-group">
-                        <label class="group-title">Координата по X:</label>
-                        <div class="x-checkbox-container">
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="-5"
-                                    class="x-checkbox"
-                                />
-                                -5
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="-4"
-                                    class="x-checkbox"
-                                />
-                                -4
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="-3"
-                                    class="x-checkbox"
-                                />
-                                -3
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="-2"
-                                    class="x-checkbox"
-                                />
-                                -2
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="-1"
-                                    class="x-checkbox"
-                                />
-                                -1
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="0"
-                                    class="x-checkbox"
-                                />
-                                0
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="1"
-                                    class="x-checkbox"
-                                />
-                                1
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="2"
-                                    class="x-checkbox"
-                                />
-                                2
-                            </label>
-                            <label class="x-checkbox-option">
-                                <input
-                                    type="checkbox"
-                                    name="x-val"
-                                    value="3"
-                                    class="x-checkbox"
-                                />
-                                3
-                            </label>
-                        </div>
+                        <label for="x-input" class="group-title">
+                            Координата по X: (от -3 до 5)
+                        </label>
+                        <input type="text" class="x-input" name="x-val" />
                         <span class="error-msg" id="x-error"></span>
                     </div>
 
@@ -124,16 +44,55 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="r-select" class="group-title"
-                            >Радиус R:</label
-                        >
-                        <select class="r-select" name="r-val">
-                            <option value="1">1</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
+                        <label for="r-radio" class="group-title">Радиус R:</label>
+                        <div class="r-radio-container">
+                            <label class="r-radio-option">
+                                <input
+                                    type="radio"
+                                    name="r-val"
+                                    value="1"
+                                    class="r-radio"
+                                    checked
+                                />
+                                1
+                            </label>
+                            <label class="r-radio-option">
+                                <input
+                                    type="radio"
+                                    name="r-val"
+                                    value="1.5"
+                                    class="r-radio"
+                                />
+                                1.5
+                            </label>
+                            <label class="r-radio-option">
+                                <input
+                                    type="radio"
+                                    name="r-val"
+                                    value="2"
+                                    class="r-radio"
+                                />
+                                2
+                            </label>
+                            <label class="r-radio-option">
+                                <input
+                                    type="radio"
+                                    name="r-val"
+                                    value="2.5"
+                                    class="r-radio"
+                                />
+                                2.5
+                            </label>
+                            <label class="r-radio-option">
+                                <input
+                                    type="radio"
+                                    name="r-val"
+                                    value="3"
+                                    class="r-radio"
+                                />
+                                3
+                            </label>
+                        </div>
                         <span class="error-msg" id="r-error"></span>
                     </div>
 

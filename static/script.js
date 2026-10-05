@@ -3,9 +3,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = canvas.getContext("2d"); // контекст рисования
 
     const form = document.querySelector(".point-form");
-    const xCheckboxes = document.querySelectorAll(".x-checkbox");
+    const xInput = document.querySelector(".x-input");
     const yInput = document.querySelector(".y-input");
-    const rSelect = document.querySelector(".r-select");
+    const rRadios = document.querySelectorAll("input[name='r-val']");
     const clearBtn = document.querySelector("#clear-btn");
     const historyBody = document.querySelector(".history-body");
 
@@ -13,22 +13,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const yError = document.querySelector("#y-error");
     const rError = document.querySelector("#r-error");
 
-    const STORAGE_KEY = "web-lab1";
+    const STORAGE_KEY = "web-lab2";
 
     const EPS = 1e-12; // для точности границ
 
     function checkHit(x, y, r) {
         if (x >= -EPS && y >= -EPS) {
-            // первая четверть, на рисунке окружность
-            return (x*x +y*y) <= r*r/4;
+            return x <= r && y <= r / 2; // прямоугольник
         }
         if (x <= EPS && y >= -EPS) {
-            // вторая четверть, на рисунке прямоугольник
-            return x >= -r && y <= r/2;
+            return y <= (x * 1 / 2 + r / 2); // треугольник
         }
-        if (x >= -EPS && y <= EPS) {
-            // четвертая четверть: треугольник
-            return y >= (x-r/2);
+        if (x <= -EPS && y <= EPS) {
+            return (x * x + y * y) <= r * r; // окружность
         }
         return false;
     }
@@ -46,21 +43,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // первая четверть
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, (r / 2) * scale, -Math.PI / 2, 0, false);
-        ctx.closePath();
+        ctx.rect(centerX, centerY - (r / 2) * scale, r * scale, (r / 2) * scale);
         ctx.fill();
 
         // вторая четверть
         ctx.beginPath();
-        ctx.rect(centerX - r * scale, centerY - (r / 2) * scale, r * scale, (r / 2) * scale);
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX - r * scale, centerY);
+        ctx.lineTo(centerX, centerY - (r / 2) * scale);
+        ctx.closePath();
         ctx.fill();
 
-        // четвертая четверть
+        // третья четверть
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + (r / 2) * scale, centerY);
-        ctx.lineTo(centerX, centerY + (r / 2) * scale);
+        ctx.arc(centerX, centerY, r * scale, Math.PI, Math.PI / 2, true);
         ctx.closePath();
         ctx.fill();
 
@@ -208,28 +205,25 @@ document.addEventListener("DOMContentLoaded", () => {
         rError.textContent = "";
 
         let isValid = true;
+        const numRegex = /^-?\d+(\.\d+)?$/;
 
         // валидация x
-        const allowedX = ["-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3"]
-        let selectedX = Array.from(xCheckboxes).filter(x => x.checked);
-
-        selectedX = selectedX.filter(x => {
-            if (!allowedX.includes(x.value)) {
-                xError.textContent += " значение X " + x.value + " не разрешено\n";
-                return false;
-            }
-            return true;
-        });
-
-        if (selectedX.length === 0) {
-            xError.textContent = "Выберите хотя бы одно значение X";
+        const xRaw = xInput.value.trim().replace(",", ".");
+        const xRegex = /^([0-4]|-[0-2])(\.\d+)?$/;
+        if (xRaw === "") {
+            xError.textContent = "Заполните поле X";
+            isValid = false;
+        } else if (!numRegex.test(xRaw)) {
+            xError.textContent = "X должен быть действительным числом";
+            isValid = false;
+        } else if (!xRegex.test(xRaw)) {
+            xError.textContent = "Число X должно строго принадлежать интервалу от -3 до 5";
             isValid = false;
         }
 
         // валидация y
         const yRaw = yInput.value.trim().replace(",", ".");
         const yRegex = /^-?[0-4](\.\d+)?$/;
-        const numRegex = /^-?\d+(\.\d+)?$/;
 
         if (yRaw === "") {
             yError.textContent = "Заполните поле Y";
@@ -244,7 +238,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // валидация r
         const allowedR = ["1", "1.5", "2", "2.5", "3"];
-        const rVal = rSelect.value;
+        let checkedR = null;
+        rRadios.forEach((radio) => {
+            if (radio.checked) {
+                checkedR = radio;
+            }
+        })
+        if (!checkedR) {
+            rError.textContent = "Выберите значение радиуса R";
+            isValid = false;
+            return;
+        }
+
+        const rVal = checkedR.value;
         const rNum = parseFloat(rVal);
 
         if (!allowedR.includes(rVal) || isNaN(rNum) || rNum <= 0) {
@@ -257,20 +263,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // переменные для сохранения
         const currentTimestamp = Date.now();
         const history = loadHistory();
+        const cleanX = parseFloat(xRaw);
         const cleanY = parseFloat(yRaw);
 
-        // проверяем каждую выбранную точку
-        selectedX.forEach(cb => {
-            const cleanX = parseFloat(cb.value);
-            const hit = checkHit(cleanX, cleanY, rNum);
-
-            history.unshift({
-                x: cb.value,
-                y: yRaw,
-                r: rVal,
-                hit: hit,
-                timestamp: currentTimestamp
-            });
+        // отправляем точку
+        const hit = checkHit(cleanX, cleanY, rNum)
+        history.unshift({
+            x: xRaw,
+            y: yRaw,
+            r: rVal,
+            hit: hit,
+            timestamp: currentTimestamp
         });
 
         // сохраняем в localStorage и перерисовываем
@@ -279,108 +282,26 @@ document.addEventListener("DOMContentLoaded", () => {
         drawCanvas(rNum);
     }
 
+    function getRValue() {
+        const checkedR = document.querySelector("input[name='r-val']:checked");
+        return checkedR ? checkedR.value : 1;
+    }
+
     form.addEventListener("submit", validateAndSubmit);
 
-    rSelect.addEventListener("change", () => {
-        const currentR = parseFloat(rSelect.value) || 2;
-        drawCanvas(currentR);
+    rRadios.forEach(radio => {
+        radio.addEventListener("change", () => {
+            const currentR = parseFloat(radio.value) || 1;
+            drawCanvas(currentR);
+        });
     });
 
     clearBtn.addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEY);
         renderTable();
-        drawCanvas(parseFloat(rSelect.value) || 2);
+        drawCanvas(getRValue())
     });
 
-    const initialR = parseFloat(rSelect.value) || 2;
     renderTable();
-    drawCanvas(initialR);
-
-    // бегающий гном
-    const N_SEC = 15; // 15
-    const K_SEC = 7; // 7
-
-    let gnomeEl = null;
-    let gnomeTimer = null;
-    let moveInterval = null;
-
-    function showGnomeMsg(message, isMiss = false) {
-        const oldMsg = document.querySelector(".gnome-msg");
-        if (oldMsg) {
-            oldMsg.remove();
-        }
-
-        const msg = document.createElement("div");
-        msg.className = `gnome-msg ${isMiss ? "gnome-miss" : ""}`;
-        msg.textContent = message;
-        document.body.appendChild(msg);
-
-        msg.addEventListener("animationend", () => msg.remove());
-    }
-
-    function moveGnome() {
-        if (!gnomeEl) {
-            return;
-        }
-
-        const maxX = window.innerWidth - 70;
-        const maxY = window.innerHeight - 70;
-        const randomX = Math.floor(Math.random() * Math.max(maxX, 0));
-        const randomY = Math.floor(Math.random() * Math.max(maxY, 0));
-
-        gnomeEl.style.left = `${randomX}px`;
-        gnomeEl.style.top = `${randomY}px`;
-    }
-
-    function removeGnome() {
-        clearTimeout(gnomeTimer);
-        clearInterval(moveInterval);
-
-        if (gnomeEl) {
-            gnomeEl.remove();
-            gnomeEl = null;
-        }
-    }
-
-    function onGnomeCatch() {
-        removeGnome();
-        showGnomeMsg("Ура, вы поймали гнома!")
-    }
-
-    function onGnomeMiss() {
-        removeGnome();
-        const history = loadHistory();
-
-        if (history.length > 0) {
-            const randomIndex = Math.floor(Math.random() * history.length);
-            const stolenPoint = history.splice(randomIndex, 1)[0];
-
-            saveHistory(history);
-            renderTable();
-            drawCanvas(parseFloat(rSelect.value) || 2);
-            showGnomeMsg(`Время вышло, гном украл точку (${stolenPoint.x}, ${stolenPoint.y})`, true);
-        } else {
-            showGnomeMsg(`Время вышло, точек нет и гном убежал ни с чем`);
-        }
-    }
-
-    function spawnGnome() {
-        if (gnomeEl) {
-            removeGnome();
-        }
-
-        gnomeEl = document.createElement("img");
-        gnomeEl.className = "gnome";
-        gnomeEl.src = "assets/gnome.png";
-        document.body.appendChild(gnomeEl);
-
-        moveGnome();
-        moveInterval = setInterval(moveGnome, 1200);
-
-        gnomeEl.addEventListener("mousedown", onGnomeCatch);
-
-        gnomeTimer = setTimeout(onGnomeMiss, K_SEC * 1000);
-    }
-
-    setInterval(spawnGnome, N_SEC * 1000);
+    drawCanvas(getRValue());
 });

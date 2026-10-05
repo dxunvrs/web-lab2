@@ -78,18 +78,12 @@ body {
     margin-bottom: 8px;
 }
 
-.x-checkbox-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
-}
-
-.x-checkbox-option {
-    display: inline-flex;
-    align-items: center;
-    font-size: 16px;
-    cursor: pointer;
+.x-input {
+    width: 35%;
+    border: 1.5px solid;
+    border-radius: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 .y-input {
@@ -100,11 +94,18 @@ body {
     margin-bottom: 4px;
 }
 
-.r-select {
-    margin-top: 4px;
-    margin-bottom: 4px;
-    font-size: 14px;
-    cursor: pointer
+.r-radio-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.r-radio-option {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    cursor: pointer;
 }
 
 /* Ошибки валидации */
@@ -134,7 +135,7 @@ body {
 }
 
 #submit-btn, #clear-btn {
-    background-color:red;
+    background-color:midnightblue;
     color: whitesmoke;
 }
 
@@ -174,16 +175,20 @@ body {
 }
 
 /* Псевдоклассы */
-.x-checkbox-option:hover {
-    background-color: whitesmoke;
-}
-
-.x-checkbox-option:has(input[type="checkbox"]:checked) {
-    font-weight: 700;
+.x-input:focus {
+    border-color: midnightblue;
 }
 
 .y-input:focus {
     border-color: midnightblue;
+}
+
+.r-radio-option:hover {
+    background-color: whitesmoke;
+}
+
+.r-radio-option:has(input[type="radio"]:checked) {
+    font-weight: 700;
 }
 
 #clear-btn:hover, #submit-btn:hover {
@@ -193,68 +198,4 @@ body {
 
 #clear-btn:active, #submit-btn:active {
     transform: translateY(1px);
-}
-
-/* пример каскадирования */
-#submit-btn, #clear-btn {
-    background-color:midnightblue;
-    color: whitesmoke;
-}
-
-/* гном */
-.gnome {
-    position: fixed;
-    z-index: 10000;
-    width: 96px;
-    height: 96px;
-    object-fit: contain;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-drag: none;
-    transition: top 0.9s ease-in-out, left 0.9s ease-in-out, transform 0.2s;
-}
-
-.gnome:hover {
-    transform: scale(1.2);
-}
-
-.gnome:active {
-    transform: scale(0.9);
-}
-
-.gnome-msg {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    padding: 14px 20px;
-    background-color: midnightblue;
-    color: white;
-    border-radius: 8px;
-    font-size: 20px;
-    font-weight: 500;
-    z-index: 9999;
-    animation: msg-anim 4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-@keyframes msg-anim {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    10% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    90% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-
-.gnome-miss {
-    background-color: red;
 }
