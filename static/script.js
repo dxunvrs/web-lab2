@@ -7,26 +7,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const yInput = document.querySelector(".y-input");
     const rRadios = document.querySelectorAll("input[name='r-val']");
     const clearBtn = document.querySelector("#clear-btn");
+    const submitBtn = document.querySelector("#submit-btn")
     const historyBody = document.querySelector(".history-body");
 
     const xError = document.querySelector("#x-error");
     const yError = document.querySelector("#y-error");
     const rError = document.querySelector("#r-error");
+    const serverError = document.querySelector("#server-error")
 
     const STORAGE_KEY = "web-lab2";
-
-    function checkHit(x, y, r) {
-        if (x >= -Number.EPSILON && y >= -Number.EPSILON) {
-            return x <= r && y <= r / 2; // прямоугольник
-        }
-        if (x <= Number.EPSILON && y >= -Number.EPSILON) {
-            return y <= (x * 1 / 2 + r / 2); // треугольник
-        }
-        if (x <= -Number.EPSILON && y <= Number.EPSILON) {
-            return (x * x + y * y) <= r * r; // окружность
-        }
-        return false;
-    }
 
     function drawCanvas(r) {
         const width = canvas.width;
@@ -137,19 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function formatDateTime(timestamp) {
-        const date = new Date(timestamp);
-        return new Intl.DateTimeFormat("ru-RU", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            timeZoneName: "short"
-        }).format(date);
-    }
-
     function loadHistory() {
         try {
             return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -164,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderTable() {
         const history = loadHistory();
-        historyBody.innerHTML = "";
 
         history.forEach(item => {
             const tr = document.createElement("tr");
@@ -187,21 +162,19 @@ document.addEventListener("DOMContentLoaded", () => {
             tdResult.style.color = item.hit ? "green" : "red";
             tr.appendChild(tdResult);
 
-            const tdTime = document.createElement("td");
-            tdTime.textContent = formatDateTime(item.timestamp);
-            tr.append(tdTime);
+            const tdServerTime = document.createElement("td");
+            tdTime.textContent = item.serverTime;
+            tr.append(tdServerTime);
+
+            const tdExecTime = document.createElement("td");
+            tdExecTime.textContent = item.execTime;
+            tr.appendChild(tdExecTime);
 
             historyBody.appendChild(tr);
         });
     }
 
-    function validateAndSubmit(e) {
-        e.preventDefault();
-
-        xError.textContent = "";
-        yError.textContent = "";
-        rError.textContent = "";
-
+    function validateInputs() {
         let isValid = true;
         const numRegex = /^-?\d+(\.\d+)?$/;
 
@@ -236,16 +209,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // валидация r
         const allowedR = ["1", "1.5", "2", "2.5", "3"];
-        let checkedR = null;
-        rRadios.forEach((radio) => {
-            if (radio.checked) {
-                checkedR = radio;
-            }
-        })
+        const checkedR = document.querySelector("input[name='r-val']:checked");
+
         if (!checkedR) {
             rError.textContent = "Выберите значение радиуса R";
             isValid = false;
-            return;
+            return { isValid: false };
         }
 
         const rVal = checkedR.value;
@@ -256,28 +225,61 @@ document.addEventListener("DOMContentLoaded", () => {
             isValid = false;
         }
 
-        if (!isValid) return;
-
-        // переменные для сохранения
-        const currentTimestamp = Date.now();
-        const history = loadHistory();
-        const cleanX = parseFloat(xRaw);
-        const cleanY = parseFloat(yRaw);
-
-        // отправляем точку
-        const hit = checkHit(cleanX, cleanY, rNum)
-        history.unshift({
+        return {
+            isValid: isValid,
             x: xRaw,
             y: yRaw,
             r: rVal,
-            hit: hit,
-            timestamp: currentTimestamp
-        });
+            rNum: rNum
+        }
+    }
 
-        // сохраняем в localStorage и перерисовываем
-        saveHistory(history);
-        renderTable();
-        drawCanvas(rNum);
+    async function submitForm(e) {
+        e.preventDefault();
+
+        const validation = validateInputs();
+        if (!validation.isValid) {
+            return;
+        }
+
+        submitBtn.disabled = true;
+
+        try {
+            const url = `/fcgi-bin/server.jar?x=${validation.x}&y=${validation.y}&r=${validation.r}`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                serverError.textContent = `Ошибка HTTP: ${response.status}`
+                return;
+            }
+
+            const data = await response.json();
+            if (data.status === "error") {
+                serverError.textContent = "Ошибка сервера: " + data.message;
+                return;
+            }
+
+            const hit = data.hit;
+            const execTime = data.executionTime;
+            const serverTime = data.serverTime;
+
+            const history = loadHistory();
+            history.unshift({
+                x: xRaw,
+                y: yRaw,
+                r: rVal,
+                hit: hit,
+                execTime: execTime,
+                serverTime: serverTime
+            });
+            saveHistory(history);
+            renderTable();
+            drawCanvas(rNum);
+        } catch (error) {
+            serverError.textContent = "Ошибка сети: сервер недоступен";
+        } finally {
+            submitBtn.disabled = false;
+        }
     }
 
     function getRValue() {
@@ -285,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return checkedR ? checkedR.value : 1;
     }
 
-    form.addEventListener("submit", validateAndSubmit);
+    form.addEventListener("submit", submitForm);
 
     rRadios.forEach(radio => {
         radio.addEventListener("change", () => {
