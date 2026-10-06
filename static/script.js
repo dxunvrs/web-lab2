@@ -7,30 +7,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const yInput = document.querySelector(".y-input");
     const rRadios = document.querySelectorAll("input[name='r-val']");
     const clearBtn = document.querySelector("#clear-btn");
-    const submitBtn = document.querySelector("#submit-btn")
+    const submitBtn = document.querySelector("#submit-btn");
     const historyBody = document.querySelector(".history-body");
 
     const xError = document.querySelector("#x-error");
     const yError = document.querySelector("#y-error");
     const rError = document.querySelector("#r-error");
-    const serverError = document.querySelector("#server-error")
+    const serverError = document.querySelector("#server-error");
 
     const STORAGE_KEY = "web-lab2";
 
     function drawCanvas(r) {
         const width = canvas.width;
         const height = canvas.height;
-        const centerX = width/2;
-        const centerY = height/2;
+        const centerX = width / 2;
+        const centerY = height / 2;
 
-        const scale = (centerX-30)/5;
+        const scale = (centerX - 30) / 5;
 
         ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = "lightsteelblue";
 
         // первая четверть
         ctx.beginPath();
-        ctx.rect(centerX, centerY - (r / 2) * scale, r * scale, (r / 2) * scale);
+        ctx.rect(
+            centerX,
+            centerY - (r / 2) * scale,
+            r * scale,
+            (r / 2) * scale,
+        );
         ctx.fill();
 
         // вторая четверть
@@ -82,13 +87,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // засечки
         const points = [
             { val: -r, text: `${-r}` },
-            { val: -r / 2, text: `${-r/2}` },
-            { val: r / 2, text: `${r/2}` },
-            { val: r, text: `${r}` }
+            { val: -r / 2, text: `${-r / 2}` },
+            { val: r / 2, text: `${r / 2}` },
+            { val: r, text: `${r}` },
         ];
 
         ctx.lineWidth = 1.2;
-        points.forEach(pt => {
+        points.forEach((pt) => {
             const offset = pt.val * scale;
 
             // x
@@ -110,13 +115,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // отрисовка точек
         const history = loadHistory();
-        history.forEach(pt => {
+        history.forEach(async (pt) => {
             const pixelX = centerX + pt.x * scale;
             const pixelY = centerY - pt.y * scale;
 
+            const hit = await checkHit(pt.x, pt.y, r);
+
             ctx.beginPath();
             ctx.arc(pixelX, pixelY, 4.5, 0, Math.PI * 2);
-            ctx.fillStyle = pt.hit ? "green" : "red";
+            ctx.fillStyle = hit ? "green" : "red";
             ctx.fill();
             ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 1;
@@ -140,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const history = loadHistory();
         historyBody.innerHTML = "";
 
-        history.forEach(item => {
+        history.forEach((item) => {
             const tr = document.createElement("tr");
 
             const tdX = document.createElement("td");
@@ -187,7 +194,8 @@ document.addEventListener("DOMContentLoaded", () => {
             xError.textContent = "X должен быть действительным числом";
             isValid = false;
         } else if (!xRegex.test(xRaw)) {
-            xError.textContent = "Число X должно строго принадлежать интервалу от -3 до 5";
+            xError.textContent =
+                "Число X должно строго принадлежать интервалу от -3 до 5";
             isValid = false;
         }
 
@@ -202,7 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
             yError.textContent = "Y должен быть действительным числом";
             isValid = false;
         } else if (!yRegex.test(yRaw)) {
-            yError.textContent = "Число Y должно строго принадлежать интервалу от -5 до 5";
+            yError.textContent =
+                "Число Y должно строго принадлежать интервалу от -5 до 5";
             isValid = false;
         }
 
@@ -229,7 +238,34 @@ document.addEventListener("DOMContentLoaded", () => {
             x: xRaw,
             y: yRaw,
             r: rVal,
-            rNum: rNum
+            rNum: rNum,
+        };
+    }
+
+    async function checkHit(x, y, r) {
+        serverError.textContent = "";
+        submitBtn.disabled = true;
+
+        try {
+            const url = `/fcgi-bin/server.jar?x=${x}&y=${y}&r=${r}`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                serverError.textContent = `Ошибка HTTP: ${response.status}`;
+                return;
+            }
+
+            const data = await response.json();
+            if (data.status === "error") {
+                serverError.textContent = "Ошибка сервера: " + data.message;
+                return;
+            }
+
+            return data.hit;
+        } catch (error) {
+            serverError.textContent = "Ошибка сети: сервер недоступен";
+        } finally {
+            submitBtn.disabled = false;
         }
     }
 
@@ -242,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const response = await fetch(url);
             if (!response.ok) {
-                serverError.textContent = `Ошибка HTTP: ${response.status}`
+                serverError.textContent = `Ошибка HTTP: ${response.status}`;
                 return;
             }
 
@@ -259,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 r: r,
                 hit: data.hit,
                 execTime: data.executionTime,
-                serverTime: data.serverTime
+                serverTime: data.serverTime,
             });
             saveHistory(history);
             renderTable();
@@ -283,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        await sendRequest(validation.x, validation.y, validation.rNum)
+        await sendRequest(validation.x, validation.y, validation.rNum);
     }
 
     function getRValue() {
@@ -293,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     form.addEventListener("submit", submitForm);
 
-    rRadios.forEach(radio => {
+    rRadios.forEach((radio) => {
         radio.addEventListener("change", () => {
             const currentR = parseFloat(radio.value) || 1;
             drawCanvas(currentR);
@@ -303,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearBtn.addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEY);
         renderTable();
-        drawCanvas(getRValue())
+        drawCanvas(getRValue());
     });
 
     canvas.addEventListener("click", (event) => {
