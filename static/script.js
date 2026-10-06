@@ -233,23 +233,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function submitForm(e) {
-        e.preventDefault();
-
-        xError.textContent = "";
-        yError.textContent = "";
-        rError.textContent = "";
+    async function sendRequest(x, y, r) {
         serverError.textContent = "";
-
-        const validation = validateInputs();
-        if (!validation.isValid) {
-            return;
-        }
-
         submitBtn.disabled = true;
 
         try {
-            const url = `/fcgi-bin/server.jar?x=${validation.x}&y=${validation.y}&r=${validation.r}`;
+            const url = `/fcgi-bin/server.jar?x=${x}&y=${y}&r=${r}`;
 
             const response = await fetch(url);
             if (!response.ok) {
@@ -265,21 +254,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const history = loadHistory();
             history.unshift({
-                x: validation.x,
-                y: validation.y,
-                r: validation.r,
+                x: x,
+                y: y,
+                r: r,
                 hit: data.hit,
                 execTime: data.executionTime,
                 serverTime: data.serverTime
             });
             saveHistory(history);
             renderTable();
-            drawCanvas(validation.rNum);
+            drawCanvas(r);
         } catch (error) {
             serverError.textContent = "Ошибка сети: сервер недоступен";
         } finally {
             submitBtn.disabled = false;
         }
+    }
+
+    async function submitForm(e) {
+        e.preventDefault();
+
+        xError.textContent = "";
+        yError.textContent = "";
+        rError.textContent = "";
+
+        const validation = validateInputs();
+        if (!validation.isValid) {
+            return;
+        }
+
+        await sendRequest(validation.x, validation.y, validation.rNum)
     }
 
     function getRValue() {
@@ -300,6 +304,33 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem(STORAGE_KEY);
         renderTable();
         drawCanvas(getRValue())
+    });
+
+    canvas.addEventListener("click", (event) => {
+        const checkedR = document.querySelector("input[name='r-val']:checked");
+        if (!checkedR) {
+            rError.textContent = "Сначала выберите значение R!";
+            return;
+        }
+        rError.textContent = "";
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const scale = (centerX - 30) / 5;
+
+        let mathX = (clickX - centerX) / scale;
+        let mathY = (centerY - clickY) / scale;
+
+        mathX = parseFloat(mathX.toFixed(3));
+        mathY = parseFloat(mathY.toFixed(3));
+
+        sendRequest(mathX, mathY, checkedR.value);
     });
 
     renderTable();
