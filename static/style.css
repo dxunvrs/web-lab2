@@ -50,7 +50,7 @@ body {
 
 .canvas-section {
     flex: 0 0 600px;
-    min-height: 600px;
+    max-height: 600px;
     max-width: 600px;
     align-self: flex-start;
     box-sizing: border-box;

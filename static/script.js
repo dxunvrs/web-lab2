@@ -17,7 +17,130 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const STORAGE_KEY = "web-lab2";
 
-    function drawCanvas(r) {
+    function clearErrors() {
+        xError.textContent = "";
+        yError.textContent = "";
+        rError.textContent = "";
+        serverError.textContent = "";
+    }
+
+    function getRValue() {
+        const checkedR = document.querySelector("input[name='r-val']:checked");
+        return checkedR ? checkedR.value : 1;
+    }
+
+    function validateX(raw) {
+        const xRegex = /^([0-4]|-[0-2])(\.\d+)?$/;
+        const numRegex = /^-?\d+(\.\d+)?$/;
+
+        if (raw === "") {
+            return "Заполните поле X";
+        } else if (!numRegex.test(raw)) {
+            return "X должен быть действительным числом";
+        } else if (!xRegex.test(raw)) {
+            return "Число X должно строго принадлежать интервалу от -3 до 5";
+        }
+    }
+
+    function validateY(raw) {
+        const yRegex = /^-?[0-4](\.\d+)?$/;
+        const numRegex = /^-?\d+(\.\d+)?$/;
+
+        if (raw === "") {
+            return "Заполните поле Y";
+        } else if (!numRegex.test(raw)) {
+            return "Y должен быть действительным числом";
+        } else if (!yRegex.test(raw)) {
+            return "Число Y должно строго принадлежать интервалу от -5 до 5";
+        }
+    }
+
+    function validateR(val) {
+        const allowedR = ["1", "1.5", "2", "2.5", "3"];
+        const rNum = parseFloat(val);
+
+        if (!allowedR.includes(val) || isNaN(rNum) || rNum <= 0) {
+            return "Недопустимое значение радиуса";
+        }
+    }
+
+    function validateFormInputs() {
+        clearErrors();
+
+        const xRaw = xInput.value.trim().replace(",", ".");
+        const yRaw = yInput.value.trim().replace(",", ".");
+        const checkedR = document.querySelector("input[name='r-val']:checked");
+
+        const xErr = validateX(xRaw);
+        const yErr = validateY(yRaw);
+        const rErr = validateR(checkedR ? checkedR.value : null);
+
+        if (xErr) xError.textContent = xErr;
+        if (yErr) yError.textContent = yErr;
+        if (rErr) rError.textContent = rErr;
+
+        if (xErr || yErr || rErr) {
+            return { isValid: false };
+        }
+
+        return {
+            isValid: true,
+            x: xRaw,
+            y: yRaw,
+            r: checkedR.value,
+            rNum: parseFloat(checkedR.value)
+        };
+    }
+
+    async function requestPoint(x, y, r) {
+        const url = `/fcgi-bin/server.jar?x=${x}&y=${y}&r=${r}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.status === "error") {
+            throw new Error(data.message || "Ошибка сервера");
+        }
+        return data;
+    }
+
+    async function checkHit(x, y, r) {
+        try {
+            const data = await requestPoint(x, y, r);
+            return data.hit;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async function sendRequest(x, y, r) {
+        clearErrors();
+        submitBtn.disabled = true;
+
+        try {
+            const data = await requestPoint(x, y, r);
+
+            const history = loadHistory();
+            history.unshift({
+                x: x,
+                y: y,
+                r: r,
+                hit: data.hit,
+                execTime: data.executionTime,
+                serverTime: data.serverTime
+            });
+            saveHistory(history);
+            renderTable();
+            await drawCanvas(r);
+        } catch (error) {
+            serverError.textContent = error.message;
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function drawCanvas(r) {
         const width = canvas.width;
         const height = canvas.height;
         const centerX = width / 2;
@@ -115,15 +238,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // отрисовка точек
         const history = loadHistory();
-        history.forEach(async (pt) => {
+        const evalPoints = await Promise.all(
+            history.map(async (pt) => {
+                let hit = pt.hit;
+                if (parseFloat(pt.r) != parseFloat(r)) {
+                    hit = await checkHit(pt.x, pt.y, r);
+                }
+                return { x: pt.x, y: pt.y, hit: hit };
+            })
+        );
+
+        evalPoints.forEach((pt) => {
             const pixelX = centerX + pt.x * scale;
             const pixelY = centerY - pt.y * scale;
 
-            const hit = await checkHit(pt.x, pt.y, r);
-
             ctx.beginPath();
             ctx.arc(pixelX, pixelY, 4.5, 0, Math.PI * 2);
-            ctx.fillStyle = hit ? "green" : "red";
+            ctx.fillStyle = pt.hit ? "green" : "red";
             ctx.fill();
             ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 1;
@@ -180,175 +311,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function validateInputs() {
-        let isValid = true;
-        const numRegex = /^-?\d+(\.\d+)?$/;
-
-        // валидация x
-        const xRaw = xInput.value.trim().replace(",", ".");
-        const xRegex = /^([0-4]|-[0-2])(\.\d+)?$/;
-        if (xRaw === "") {
-            xError.textContent = "Заполните поле X";
-            isValid = false;
-        } else if (!numRegex.test(xRaw)) {
-            xError.textContent = "X должен быть действительным числом";
-            isValid = false;
-        } else if (!xRegex.test(xRaw)) {
-            xError.textContent =
-                "Число X должно строго принадлежать интервалу от -3 до 5";
-            isValid = false;
-        }
-
-        // валидация y
-        const yRaw = yInput.value.trim().replace(",", ".");
-        const yRegex = /^-?[0-4](\.\d+)?$/;
-
-        if (yRaw === "") {
-            yError.textContent = "Заполните поле Y";
-            isValid = false;
-        } else if (!numRegex.test(yRaw)) {
-            yError.textContent = "Y должен быть действительным числом";
-            isValid = false;
-        } else if (!yRegex.test(yRaw)) {
-            yError.textContent =
-                "Число Y должно строго принадлежать интервалу от -5 до 5";
-            isValid = false;
-        }
-
-        // валидация r
-        const allowedR = ["1", "1.5", "2", "2.5", "3"];
-        const checkedR = document.querySelector("input[name='r-val']:checked");
-
-        if (!checkedR) {
-            rError.textContent = "Выберите значение радиуса R";
-            isValid = false;
-            return { isValid: false };
-        }
-
-        const rVal = checkedR.value;
-        const rNum = parseFloat(rVal);
-
-        if (!allowedR.includes(rVal) || isNaN(rNum) || rNum <= 0) {
-            rError.textContent = "Недопустимое значение радиуса";
-            isValid = false;
-        }
-
-        return {
-            isValid: isValid,
-            x: xRaw,
-            y: yRaw,
-            r: rVal,
-            rNum: rNum,
-        };
-    }
-
-    async function checkHit(x, y, r) {
-        serverError.textContent = "";
-        submitBtn.disabled = true;
-
-        try {
-            const url = `/fcgi-bin/server.jar?x=${x}&y=${y}&r=${r}`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                serverError.textContent = `Ошибка HTTP: ${response.status}`;
-                return;
-            }
-
-            const data = await response.json();
-            if (data.status === "error") {
-                serverError.textContent = "Ошибка сервера: " + data.message;
-                return;
-            }
-
-            return data.hit;
-        } catch (error) {
-            serverError.textContent = "Ошибка сети: сервер недоступен";
-        } finally {
-            submitBtn.disabled = false;
-        }
-    }
-
-    async function sendRequest(x, y, r) {
-        serverError.textContent = "";
-        submitBtn.disabled = true;
-
-        try {
-            const url = `/fcgi-bin/server.jar?x=${x}&y=${y}&r=${r}`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                serverError.textContent = `Ошибка HTTP: ${response.status}`;
-                return;
-            }
-
-            const data = await response.json();
-            if (data.status === "error") {
-                serverError.textContent = "Ошибка сервера: " + data.message;
-                return;
-            }
-
-            const history = loadHistory();
-            history.unshift({
-                x: x,
-                y: y,
-                r: r,
-                hit: data.hit,
-                execTime: data.executionTime,
-                serverTime: data.serverTime,
-            });
-            saveHistory(history);
-            renderTable();
-            drawCanvas(r);
-        } catch (error) {
-            serverError.textContent = "Ошибка сети: сервер недоступен";
-        } finally {
-            submitBtn.disabled = false;
-        }
-    }
-
-    async function submitForm(e) {
+    form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
-        xError.textContent = "";
-        yError.textContent = "";
-        rError.textContent = "";
-
-        const validation = validateInputs();
+        const validation = validateFormInputs();
         if (!validation.isValid) {
             return;
         }
 
-        await sendRequest(validation.x, validation.y, validation.rNum);
-    }
-
-    function getRValue() {
-        const checkedR = document.querySelector("input[name='r-val']:checked");
-        return checkedR ? checkedR.value : 1;
-    }
-
-    form.addEventListener("submit", submitForm);
+        await sendRequest(validation.x, validation.y, validation.r);
+    });
 
     rRadios.forEach((radio) => {
-        radio.addEventListener("change", () => {
+        radio.addEventListener("change", async () => {
             const currentR = parseFloat(radio.value) || 1;
-            drawCanvas(currentR);
+            await drawCanvas(currentR);
         });
     });
 
-    clearBtn.addEventListener("click", () => {
+    clearBtn.addEventListener("click", async () => {
         localStorage.removeItem(STORAGE_KEY);
         renderTable();
-        drawCanvas(getRValue());
+        await drawCanvas(getRValue());
     });
 
-    canvas.addEventListener("click", (event) => {
-        const checkedR = document.querySelector("input[name='r-val']:checked");
-        if (!checkedR) {
+    canvas.addEventListener("click", async (event) => {
+        clearErrors();
+
+        const rErr = validateR(getRValue());
+        if (rErr) {
             rError.textContent = "Сначала выберите значение R!";
             return;
         }
-        rError.textContent = "";
 
         const rect = canvas.getBoundingClientRect();
         const clickX = event.clientX - rect.left;
@@ -366,7 +359,14 @@ document.addEventListener("DOMContentLoaded", () => {
         mathX = parseFloat(mathX.toFixed(3));
         mathY = parseFloat(mathY.toFixed(3));
 
-        sendRequest(mathX, mathY, checkedR.value);
+        const xErr = validateX(`${mathX}`);
+        const yErr = validateY(`${mathY}`);
+
+        if (xErr) xError.textContent = xErr;
+        if (yErr) yError.textContent = yErr;
+        if (xErr || yErr) return;
+
+        sendRequest(mathX, mathY, getRValue());
     });
 
     renderTable();
