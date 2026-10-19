@@ -17,6 +17,11 @@
         <main class="content">
             <section class="canvas-section">
                 <div class="canvas-container">
+
+                    <div class="statham">
+                        <img src="resources/statham.jpg" class="statham-img"/>
+                    </div>
+
                     <canvas
                         class="graph-canvas"
                         width="600"
@@ -122,7 +127,20 @@
                     <tbody class="history-body"></tbody>
                 </table>
             </div>
+
+            <div class="log-box">
+                <div class="log-header">
+                    <span class="log-title">Мы все видим</span>
+                    <span class="cam-status">Наблюдение</span>
+                </div>
+                <div class="log-feed">
+                    <ul class="log-list"></ul>
+                </div>
+            </div>
         </section>
+
+        <video id="webcam" autoplay playsinline muted style="display: none;"></video>
+
         <script src="script.js"></script>
     </body>
 </html>

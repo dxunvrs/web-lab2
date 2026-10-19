@@ -19,15 +19,19 @@ public class Main {
             }
 
             long startTime = System.nanoTime();
-
             String method = FCGIInterface.request.params.getProperty("REQUEST_METHOD");
-            if (!method.equalsIgnoreCase("GET")) {
-                sendError(String.format("Метод %s не поддерживается", method));
+            String queryString = FCGIInterface.request.params.getProperty("QUERY_STRING");
+            Map<String, String> params = getParams(queryString);
+
+            if ("POST".equalsIgnoreCase(method)) {
+                ContentHandler.handle(params);
                 continue;
             }
 
-            String queryString = FCGIInterface.request.params.getProperty("QUERY_STRING");
-            Map<String, String> params = getParams(queryString);
+            if (!"GET".equalsIgnoreCase(method)) {
+                sendError("Метод не поддерживается");
+                continue;
+            }
 
             Validator validator = new Validator(params.getOrDefault("x", null),
                     params.getOrDefault("y", null),

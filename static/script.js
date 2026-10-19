@@ -315,9 +315,11 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const validation = validateFormInputs();
         if (!validation.isValid) {
+            startRecording();
             return;
         }
 
+        endRecording();
         await sendRequest(validation.x, validation.y, validation.r);
     });
 
@@ -362,8 +364,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const xErr = validateX(`${mathX}`);
         const yErr = validateY(`${mathY}`);
 
-        if (xErr) xError.textContent = xErr;
-        if (yErr) yError.textContent = yErr;
+        if (xErr) {
+            xError.textContent = xErr;
+            capturePhoto();
+        }
+        if (yErr) {
+            yError.textContent = yErr;
+            capturePhoto();
+        }
         if (xErr || yErr) return;
 
         sendRequest(mathX, mathY, getRValue());
@@ -371,4 +379,135 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderTable();
     drawCanvas(getRValue());
+
+    const webcamVideo = document.querySelector("#webcam");
+    const statham = document.querySelector(".statham");
+    const camStatus = document.querySelector(".cam-status");
+    const logs = document.querySelector(".log-list");
+    const memeAudio = new Audio("resources/meme.mp4");
+    const amongusAudio = new Audio("resources/amongus.mp3");
+    memeAudio.volume = 0.2;
+    amongusAudio.volume = 0.2;
+
+    let mediaStream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isValid = true;
+    let lastPhotoTime = 0;
+    let stathamTimer = null;
+
+    function addLog(text) {
+        const time = new Date().toLocaleTimeString("ru-RU");
+        const li = document.createElement("li");
+        li.textContent = `[${time}] ${text}`;
+        logs.prepend(li);
+    }
+
+    async function initWebcam() {
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            webcamVideo.srcObject = mediaStream;
+            camStatus.textContent = "Наблюдение";
+            addLog("Камера найдена")
+        } catch (e) {
+            camStatus.textContent = "Камера откл.";
+            addLog("Камера недоступна");
+        }
+    }
+    initWebcam();
+
+    function showStatham() {
+        if (stathamTimer) clearTimeout(stathamTimer);
+
+        memeAudio.currentTime = 0;
+        memeAudio.play().catch(() => {});
+
+        statham.classList.add("active");
+        stathamTimer = setTimeout(() => {
+            statham.classList.remove("active");
+        }, 1200);
+    }
+
+    function capturePhoto() {
+        showStatham();
+
+        const now = Date.now();
+        if (now - lastPhotoTime < 1500) return;
+        lastPhotoTime = now;
+
+        if (!mediaStream) {
+            addLog("Камера не захвачена");
+            return;
+        }
+
+        const pCanvas = document.createElement("canvas");
+        pCanvas.width = webcamVideo.videoWidth;
+        pCanvas.height = webcamVideo.videoHeight;
+        const pCtx = pCanvas.getContext("2d");
+        pCtx.drawImage(webcamVideo, 0, 0);
+
+        pCanvas.toBlob(async (blob) => {
+            if (!blob) return;
+            try {
+                const res = await fetch("/fcgi-bin/server.jar?type=photo", { method: "POST", body: blob });
+                const json = await res.json();
+                addLog(`Неправильно, попробуйте еще раз (фото нарушителя - ${json.file || "photo.jpg"})`);
+            } catch (err) {
+                addLog("Ошибка отправки фото на сервер");
+            }
+        }, "image/jpeg", 0.85);
+    }
+
+    [xInput, yInput].forEach((input) => {
+        input.addEventListener("input", () => {
+            if (/[^0-9.,-]/.test(input.value)) {
+                capturePhoto();
+            }
+        });
+    });
+
+    function startRecording() {
+        if (!mediaStream || !isValid) return;
+        isValid = false;
+        recordedChunks = [];
+
+        amongusAudio.currentTime = 0;
+        amongusAudio.play().catch(() => {});
+
+        try {
+            mediaRecorder = new MediaRecorder(mediaStream, { mimeType: "video/webm" });
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            mediaRecorder.start();
+
+            camStatus.textContent = "Съемка нарушителя";
+            addLog("Невалидно, злостный нарушитель будет найден");
+        } catch (e) {
+            addLog(e);
+        }
+    }
+
+    function endRecording() {
+        if (isValid || !mediaRecorder) return;
+        isValid = true;
+
+        if (mediaRecorder.state == "recording") {
+            mediaRecorder.onstop = async () => {
+                const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
+                try {
+                    const res = await fetch("/fcgi-bin/server.jar?type=video", { method: "POST", body: videoBlob });
+                    const json = await res.json();
+                    addLog(`Видео нарушения направлено под расследование (${json.file || "video.webm"})`);
+                } catch (e) {
+                    addLog("Ошибка отправки видео");
+                }
+                recordedChunks = [];
+                camStatus.textContent = "Наблюдение";
+            };
+            mediaRecorder.stop();
+        }
+    }
 });
